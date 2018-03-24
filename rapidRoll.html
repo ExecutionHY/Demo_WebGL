@@ -150,60 +150,6 @@
     var cubeVertexIndexBuffer;
 
     function initBuffers() {
-        pyramidVertexPositionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, pyramidVertexPositionBuffer);
-        var vertices = [
-            // Front face
-             0.0,  1.0,  0.0,
-            -1.0, -1.0,  1.0,
-             1.0, -1.0,  1.0,
-
-            // Right face
-             0.0,  1.0,  0.0,
-             1.0, -1.0,  1.0,
-             1.0, -1.0, -1.0,
-
-            // Back face
-             0.0,  1.0,  0.0,
-             1.0, -1.0, -1.0,
-            -1.0, -1.0, -1.0,
-
-            // Left face
-             0.0,  1.0,  0.0,
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0,  1.0
-        ];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        pyramidVertexPositionBuffer.itemSize = 3;
-        pyramidVertexPositionBuffer.numItems = 12;
-
-        pyramidVertexColorBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, pyramidVertexColorBuffer);
-        var colors = [
-            // Front face
-            1.0, 0.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-
-            // Right face
-            1.0, 0.0, 0.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-
-            // Back face
-            1.0, 0.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-
-            // Left face
-            1.0, 0.0, 0.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-            0.0, 1.0, 0.0, 1.0
-        ];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-        pyramidVertexColorBuffer.itemSize = 4;
-        pyramidVertexColorBuffer.numItems = 12;
-
 
         cubeVertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
@@ -288,6 +234,8 @@
     var rPyramid = 0;
     var rCube = 0;
 
+    position_box = [0.0, 10.0, 0.0];
+
     function drawScene() {
         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -296,27 +244,12 @@
 
         mat4.identity(mvMatrix);
 
-        mat4.translate(mvMatrix, [-1.5, 0.0, -8.0]);
+        mat4.translate(mvMatrix, [0.0, 0.0, -40.0]);
+
 
         mvPushMatrix();
-        mat4.rotate(mvMatrix, degToRad(rPyramid), [0, 1, 0]);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, pyramidVertexPositionBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, pyramidVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, pyramidVertexColorBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, pyramidVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-        setMatrixUniforms();
-        gl.drawArrays(gl.TRIANGLES, 0, pyramidVertexPositionBuffer.numItems);
-
-        mvPopMatrix();
-
-
-        mat4.translate(mvMatrix, [3.0, 0.0, 0.0]);
-
-        mvPushMatrix();
-        mat4.rotate(mvMatrix, degToRad(rCube), [1, 1, 1]);
+        mat4.translate(mvMatrix, position_box);
+        mat4.rotate(mvMatrix, degToRad(rCube), [0, 0, 1]);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -332,6 +265,40 @@
 
     }
 
+    var move_left = false;
+    var move_up = false;
+    var move_right = false;
+    var move_down = false;
+
+    function onDocumentKeyDown(event) {
+        if (event.keyCode == 37) {
+            move_left = true;
+        }
+        else if (event.keyCode == 38) {
+            move_up = true;
+        }
+        else if (event.keyCode == 39) {
+            move_right = true;
+        }
+        else if (event.keyCode == 40) {
+            move_down = true;
+        }
+    }
+    function onDocumentKeyUp(event) {
+        if (event.keyCode == 37) {
+            move_left = false;
+        }
+        else if (event.keyCode == 38) {
+            move_up = false;
+        }
+        else if (event.keyCode == 39) {
+            move_right = false;
+        }
+        else if (event.keyCode == 40) {
+            move_down = false;
+        }
+    }
+
 
     var lastTime = 0;
 
@@ -341,7 +308,19 @@
             var elapsed = timeNow - lastTime;
 
             rPyramid += (90 * elapsed) / 1000.0;
-            rCube -= (75 * elapsed) / 1000.0;
+            //rCube -= (75 * elapsed) / 1000.0;
+            if (move_left) {
+                position_box[0] -= elapsed / 50.0;
+                rCube += (90 * elapsed) / 200.0;
+            }
+            else if (move_right) {
+                position_box[0] += elapsed / 50.0;
+                rCube -= (90 * elapsed) / 200.0;
+            }
+            else {
+                var direction = Math.round(rCube/90.0) - Math.floor(rCube/90.0);
+                rCube += direction*(90 * elapsed) / 200.0;
+            }
         }
         lastTime = timeNow;
     }
@@ -355,13 +334,16 @@
 
 
     function webGLStart() {
-        var canvas = document.getElementById("lesson04-canvas");
+        var canvas = document.getElementById("display");
         initGL(canvas);
         initShaders()
         initBuffers();
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.enable(gl.DEPTH_TEST);
+
+        document.addEventListener('keydown',onDocumentKeyDown,false);
+        document.addEventListener('keyup',onDocumentKeyUp,false);
 
         tick();
     }
@@ -373,12 +355,7 @@
 
 
 <body onload="webGLStart();">
-    <a href="http://learningwebgl.com/blog/?p=370">&lt;&lt; Back to Lesson 4</a><br />
-
-    <canvas id="lesson04-canvas" style="border: none;" width="500" height="500"></canvas>
-
-    <br/>
-    <a href="http://learningwebgl.com/blog/?p=370">&lt;&lt; Back to Lesson 4</a><br />
+    <canvas id="display" style="border: none;" width="500" height="500"></canvas>
 </body>
 
 </html>
