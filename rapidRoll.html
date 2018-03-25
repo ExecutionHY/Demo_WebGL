@@ -6,6 +6,7 @@
 
 <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
 <script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="cannon.min.js"></script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
@@ -248,6 +249,9 @@
 
 
         mvPushMatrix();
+        position_box[0] = boxBody.position.x;
+        position_box[1] = boxBody.position.y;
+        position_box[2] = boxBody.position.z;
         mat4.translate(mvMatrix, position_box);
         mat4.rotate(mvMatrix, degToRad(rCube), [0, 0, 1]);
 
@@ -302,25 +306,45 @@
 
     var lastTime = 0;
 
+    // initialize physics engine
+    var world = new CANNON.World();
+    world.gravity.set(0, 0, -9.82);
+
+    // create a box
+    var boxBody = new CANNON.Body({
+        mass: 1,
+        allowSleep: false,
+        position: new CANNON.Vec3(0, 0, 10),
+        shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
+    });
+    world.addBody(boxBody);
+
+    var groundBody = new CANNON.Body({
+        mass: 0,
+        shape: new CANNON.Plane(),
+    });
+    world.addBody(groundBody);
+
     function animate() {
         var timeNow = new Date().getTime();
         if (lastTime != 0) {
-            var elapsed = timeNow - lastTime;
+            var elapsed = (timeNow - lastTime) / 1000.0;
 
-            rPyramid += (90 * elapsed) / 1000.0;
-            //rCube -= (75 * elapsed) / 1000.0;
             if (move_left) {
-                position_box[0] -= elapsed / 50.0;
-                rCube += (90 * elapsed) / 200.0;
+                boxBody.applyForce(new CANNON.Vec3(-100, 0, 0), boxBody.position);
             }
             else if (move_right) {
-                position_box[0] += elapsed / 50.0;
-                rCube -= (90 * elapsed) / 200.0;
+                boxBody.applyForce(new CANNON.Vec3(100, 0, 0), boxBody.position);
             }
             else {
-                var direction = Math.round(rCube/90.0) - Math.floor(rCube/90.0);
-                rCube += direction*(90 * elapsed) / 200.0;
+                boxBody.velocity.x = 0;
+                //if (boxBody.velocity.x > 0) boxBody.force = new CANNON.Vec3(-1, 0, 0);
+                //else if (boxBody.velocity.x < 0) boxBody.force = new CANNON.Vec3(1, 0, 0);
+                //else boxBody.force = new CANNON.Vec3(0, 0, 0);
             }
+            boxBody.force.y = 0;
+            boxBody.force.z = 0;
+            world.step(1.0/60, elapsed, 3);
         }
         lastTime = timeNow;
     }
@@ -344,6 +368,9 @@
 
         document.addEventListener('keydown',onDocumentKeyDown,false);
         document.addEventListener('keyup',onDocumentKeyUp,false);
+
+
+
 
         tick();
     }
