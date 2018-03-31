@@ -236,6 +236,9 @@ var move_left = false;
 var move_up = false;
 var move_right = false;
 var move_down = false;
+var move_jump = false;
+var constraint_y = true;
+var constraint_z = false;
 
 function onDocumentKeyDown(event) {
     if (event.keyCode == 37) {
@@ -249,6 +252,9 @@ function onDocumentKeyDown(event) {
     }
     else if (event.keyCode == 40) {
         move_down = true;
+    }
+    else if (event.keyCode == 32) {
+        move_jump = true;
     }
 }
 function onDocumentKeyUp(event) {
@@ -276,17 +282,22 @@ var world = new CANNON.World();
 world.gravity.set(0, 0, -9.82);
 
 // create a box
+var boxMtl = new CANNON.Material({
+	friction: 0.01,
+});
 var boxBody = new CANNON.Body({
     mass: 1,
     allowSleep: false,
     position: new CANNON.Vec3(0, 0, 10),
-    shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
+	shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
+	material: boxMtl,
 });
 world.addBody(boxBody);
 
 var groundBody = new CANNON.Body({
     mass: 0,
     shape: new CANNON.Plane(),
+    collisionResponse: false,
 });
 world.addBody(groundBody);
 
@@ -311,8 +322,39 @@ function animate() {
             //else if (boxBody.velocity.x < 0) boxBody.force = new CANNON.Vec3(1, 0, 0);
             //else boxBody.force = new CANNON.Vec3(0, 0, 0);
         }
-        boxBody.velocity.y = 0;
+        if (move_jump) {
+			if (boxBody.position.z < 0.75) {
+				boxBody.velocity.z = 10;
+			}
+			move_jump = false;
+		}
+		/*
+		if (boxBody.position.z <= 0.51 && 0 <= boxBody.velocity.z && boxBody.velocity.z < 0.2) {
+			constraint_z = true;
+		}
+		else {
+			constraint_z == false;
+		}
+		if (move_jump) {
+			if (boxBody.position.z < 0.7) {
+				boxBody.velocity.z = 10;
+			}
+			move_jump = false;
+			constraint_z = false;
+		}
+		var posz = boxBody.position.z;
+		*/
+        var posy = boxBody.position.y;
         world.step(1.0/60, elapsed, 3);
+        if (constraint_y) {
+            boxBody.position.y = posy;
+		}
+		/*
+        if (constraint_z) {
+			boxBody.position.z = posz;
+			boxBody.velocity.z = 0;
+		}
+		*/
     }
     lastTime = timeNow;
 }
