@@ -210,24 +210,32 @@ function drawScene() {
     mat4.rotate(mvMatrix, degToRad(-60), [1, 0, 0]);
     mat4.translate(mvMatrix, [0.0, 40.0, -20.0]);
 
-
+	// box
     mvPushMatrix();
-    position_box[0] = boxBody.position.x;
-    position_box[1] = boxBody.position.y;
-    position_box[2] = boxBody.position.z;
-    mat4.translate(mvMatrix, position_box);
-    mat4.rotate(mvMatrix, degToRad(rCube), [0, 0, 1]);
+    mat4.translate(mvMatrix, [boxBody.position.x, boxBody.position.y, boxBody.position.z]);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, cubeVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
     gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
+	mvPopMatrix();
+	
+	// box
+	mvPushMatrix();
+    mat4.translate(mvMatrix, [boardBody.position.x, boardBody.position.y, boardBody.position.z]);
+	mat4.scale(mvMatrix, [4, 3, 0.2]);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, cubeVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+    setMatrixUniforms();
+    gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     mvPopMatrix();
 
 }
@@ -276,12 +284,11 @@ function onDocumentKeyUp(event) {
 var lastTime = 0;
 
 // initialize physics engine
-var speedLimit = 10;
-
 var world = new CANNON.World();
 world.gravity.set(0, 0, -9.82);
 
 // create a box
+var speedLimit = 10;
 var boxMtl = new CANNON.Material({
 	friction: 0.01,
 });
@@ -289,10 +296,18 @@ var boxBody = new CANNON.Body({
     mass: 1,
     allowSleep: false,
     position: new CANNON.Vec3(0, 0, 10),
-	shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
+	shape: new CANNON.Box(new CANNON.Vec3(1, 1, 1)),
 	material: boxMtl,
 });
 world.addBody(boxBody);
+
+var boardBody = new CANNON.Body({
+	mass: 0,
+	allowSleep: false,
+	position: new CANNON.Vec3(0, 0, 4),
+	shape: new CANNON.Box(new CANNON.Vec3(4, 2, 0.2)),
+});
+world.addBody(boardBody);
 
 var groundBody = new CANNON.Body({
     mass: 0,
@@ -318,12 +333,9 @@ function animate() {
         }
         else {
             boxBody.velocity.x = 0;
-            //if (boxBody.velocity.x > 0) boxBody.force = new CANNON.Vec3(-1, 0, 0);
-            //else if (boxBody.velocity.x < 0) boxBody.force = new CANNON.Vec3(1, 0, 0);
-            //else boxBody.force = new CANNON.Vec3(0, 0, 0);
         }
         if (move_jump) {
-			if (boxBody.position.z < 0.75) {
+			if (boxBody.position.z < 1.1) {
 				boxBody.velocity.z = 10;
 			}
 			move_jump = false;
