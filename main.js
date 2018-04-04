@@ -198,7 +198,6 @@ function initBuffers() {
 var rPyramid = 0;
 var rCube = 0;
 
-position_box = [0.0, 10.0, 0.0];
 
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
@@ -208,7 +207,7 @@ function drawScene() {
 
     mat4.identity(mvMatrix);
     mat4.rotate(mvMatrix, degToRad(-60), [1, 0, 0]);
-    mat4.translate(mvMatrix, [0.0, 40.0, -20.0]);
+    mat4.translate(mvMatrix, [-(boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
 
 	// box
     mvPushMatrix();

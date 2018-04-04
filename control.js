@@ -37,8 +37,6 @@ function onDocumentKeyUp(event) {
         move_down = false;
     }
 }
-
-
 var lastTime = 0;
 
 // initialize physics engine
@@ -72,7 +70,7 @@ var groundBody = new CANNON.Body({
     shape: new CANNON.Plane(),
     collisionResponse: false,
 });
-world.addBody(groundBody);
+//world.addBody(groundBody);
 
 function animate() {
     var timeNow = new Date().getTime();
@@ -113,7 +111,12 @@ function animate() {
 			constraint_z = false;
 		}
 		var posz = boxBody.position.z;
-		*/
+        */
+        
+        if (boxBody.position.z < -40) {
+            boxBody.position = new CANNON.Vec3(0, 0, 40);
+        }
+
         var posy = boxBody.position.y;
         world.step(1.0/60, elapsed, 3);
         if (constraint_y) {
