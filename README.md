@@ -23,3 +23,7 @@ step1. Safari -> Preferences -> Advanced -> Show Develop menu in menu bar
 step2. Develop -> Disable local file districtions
 ```
 
+Q2: If you want to put GLSL codes into files:
+
+- Start a HttpRequest to get GLSL files
+- Wait for responce, and then init the shaderProgram
