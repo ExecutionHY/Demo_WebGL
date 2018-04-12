@@ -4,7 +4,7 @@ A small game based on WebGL
 
 ### Basic
 
-- [x] Fixed camera (move on z-axis)
+- [x] following camera (move on z-axis)
 - [ ] Ball rolling on the boards
 - [ ] Different kind of boards
 - [ ] Score system

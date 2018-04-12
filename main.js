@@ -1,16 +1,4 @@
 
-
-var neheTexture;
-function initTexture() {
-  neheTexture = gl.createTexture();
-  neheTexture.image = new Image();
-  neheTexture.image.onload = function() {
-	handleLoadedTexture(neheTexture)
-  }
-
-  neheTexture.image.src = "bg.gif";
-}
-
 function handleLoadedTexture(texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -20,8 +8,72 @@ function handleLoadedTexture(texture) {
 	gl.generateMipmap(gl.TEXTURE_2D);
 
     gl.bindTexture(gl.TEXTURE_2D, null);
-  }
+}
 
+var bgTexture;
+var grayWallTexture;
+
+function initTextures() {
+	bgTexture = gl.createTexture();
+	bgTexture.image = new Image();
+	bgTexture.image.onload = function () {
+		handleLoadedTexture(bgTexture)
+	}
+	bgTexture.image.src = "bg.gif";
+
+	grayWallTexture = gl.createTexture();
+	grayWallTexture.image = new Image();
+	grayWallTexture.image.onload = function () {
+		handleLoadedTexture(grayWallTexture)
+	}
+	grayWallTexture.image.src = "gray_wall.jpg";
+}
+
+var teapotVertexPositionBuffer;
+var teapotVertexNormalBuffer;
+var teapotVertexTextureCoordBuffer;
+var teapotVertexIndexBuffer;
+
+function handleLoadedTeapot(teapotData) {
+	teapotVertexNormalBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexNormals), gl.STATIC_DRAW);
+	teapotVertexNormalBuffer.itemSize = 3;
+	teapotVertexNormalBuffer.numItems = teapotData.vertexNormals.length / 3;
+
+	teapotVertexTextureCoordBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexTextureCoordBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexTextureCoords), gl.STATIC_DRAW);
+	teapotVertexTextureCoordBuffer.itemSize = 2;
+	teapotVertexTextureCoordBuffer.numItems = teapotData.vertexTextureCoords.length / 2;
+
+	teapotVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexPositions), gl.STATIC_DRAW);
+	teapotVertexPositionBuffer.itemSize = 3;
+	teapotVertexPositionBuffer.numItems = teapotData.vertexPositions.length / 3;
+
+	teapotVertexIndexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, teapotVertexIndexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(teapotData.indices), gl.STATIC_DRAW);
+	teapotVertexIndexBuffer.itemSize = 1;
+	teapotVertexIndexBuffer.numItems = teapotData.indices.length;
+
+	document.getElementById("loadingtext").textContent = "";
+}
+
+
+function loadTeapot() {
+	var request = new XMLHttpRequest();
+	request.open("GET", "Teapot.json");
+	request.onreadystatechange = function () {
+		if (request.readyState == 4) {
+			handleLoadedTeapot(JSON.parse(request.responseText));
+		}
+	}
+	request.send();
+}
+  
 
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
@@ -31,21 +83,16 @@ function drawScene() {
 
     mat4.identity(mvMatrix);
     mat4.rotate(mvMatrix, degToRad(-60), [1, 0, 0]);
-    mat4.translate(mvMatrix, [-(boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
+    //mat4.rotate(mvMatrix, degToRad(-10), [0, 1, 0]);
+    
+    mat4.translate(mvMatrix, [-(-5+boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
 
-	// box
-    mvPushMatrix();
+	// teapot
+	mvPushMatrix();
 	mat4.translate(mvMatrix, [boxBody.position.x, boxBody.position.y, boxBody.position.z]);
+	mat4.scale(mvMatrix, [0.1, 0.1, 0.1]);
+	mat4.rotate(mvMatrix, degToRad(90), [1, 0, 0]);
 	
-	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, neheTexture);
-	gl.uniform1i(shaderProgram.samplerUniform, 0);
 
 	var lightOn = 1;
     gl.uniform1i(shaderProgram.useLightingUniform, lightOn);
@@ -60,11 +107,21 @@ function drawScene() {
 	var normalMatrix = mat3.create();
     mat4.toInverseMat3(mvMatrix, normalMatrix);
     mat3.transpose(normalMatrix);
-    gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+	
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, bgTexture);
+	gl.uniform1i(shaderProgram.samplerUniform, 0);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-    setMatrixUniforms();
-    gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, teapotVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, teapotVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, teapotVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, teapotVertexIndexBuffer);
+	setMatrixUniforms();
+	gl.drawElements(gl.TRIANGLES, teapotVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
 	mvPopMatrix();
 	
@@ -76,8 +133,8 @@ function drawScene() {
     gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, neheTexture);
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
+    gl.bindTexture(gl.TEXTURE_2D, grayWallTexture);
+	gl.uniform1i(shaderProgram.samplerUniform, 0);
 	
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
     setMatrixUniforms();
@@ -98,7 +155,8 @@ function webGLStart() {
     initGL(canvas);
     initShaders()
 	initBuffers();
-	initTexture();
+	initTextures();
+	loadTeapot();
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);

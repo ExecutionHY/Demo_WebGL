@@ -78,14 +78,10 @@ function animate() {
         var elapsed = (timeNow - lastTime) / 1000.0;
 
         if (move_left) {
-            if (boxBody.velocity.x > -speedLimit) {
-                boxBody.applyForce(new CANNON.Vec3(-100.0, 0.0, 0.0), boxBody.position);
-            }
+            boxBody.position.x += -speedLimit * elapsed;
         }
         else if (move_right) {
-            if (boxBody.velocity.x < speedLimit) {
-                boxBody.applyForce(new CANNON.Vec3(100.0, 0.0, 0.0), boxBody.position);
-            }
+            boxBody.position.x += speedLimit * elapsed;
         }
         else {
             boxBody.velocity.x = 0;
