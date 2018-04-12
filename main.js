@@ -26,7 +26,7 @@ function initTextures() {
 	grayWallTexture.image.onload = function () {
 		handleLoadedTexture(grayWallTexture)
 	}
-	grayWallTexture.image.src = "gray_wall.jpg";
+	grayWallTexture.image.src = "gray_wall.gif";
 }
 
 var teapotVertexPositionBuffer;
@@ -65,7 +65,7 @@ function handleLoadedTeapot(teapotData) {
 
 function loadTeapot() {
 	var request = new XMLHttpRequest();
-	request.open("GET", "Teapot.json");
+	request.open("GET", "teapot.json");
 	request.onreadystatechange = function () {
 		if (request.readyState == 4) {
 			handleLoadedTeapot(JSON.parse(request.responseText));
@@ -79,13 +79,13 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+    mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0, pMatrix);
 
     mat4.identity(mvMatrix);
     mat4.rotate(mvMatrix, degToRad(-60), [1, 0, 0]);
     //mat4.rotate(mvMatrix, degToRad(-10), [0, 1, 0]);
     
-    mat4.translate(mvMatrix, [-(-5+boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
+    mat4.translate(mvMatrix, [-(-0+boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
 
 	// teapot
 	mvPushMatrix();
@@ -94,23 +94,23 @@ function drawScene() {
 	mat4.rotate(mvMatrix, degToRad(90), [1, 0, 0]);
 	
 
-	var lightOn = 1;
-    gl.uniform1i(shaderProgram.useLightingUniform, lightOn);
-	gl.uniform3fv(shaderProgram.ambientColorUniform, [1, 1, 1]);
-	var lightPos = [1, -1, 1]
-	var lightDir = vec3.create();
-	vec3.normalize(lightPos, lightDir);
-	vec3.scale(lightDir, -1);
-	
-	gl.uniform3fv(shaderProgram.lightingDirectionUniform, lightDir);
+	var lighting = 1;
+	var lightPos = [-10, 20, 20];
 
-	var normalMatrix = mat3.create();
-    mat4.toInverseMat3(mvMatrix, normalMatrix);
-    mat3.transpose(normalMatrix);
-	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+	var specularHighlights = 1;
+	gl.uniform1i(shaderProgram.showSpecularHighlightsUniform, specularHighlights);
+
+	gl.uniform1i(shaderProgram.useLightingUniform, lighting);
+	if (lighting) {
+		gl.uniform3fv(shaderProgram.ambientColorUniform, [0.2, 0.2, 0.2]);
+		gl.uniform3fv(shaderProgram.pointLightingLocationUniform, lightPos);
+		gl.uniform3fv(shaderProgram.pointLightingSpecularColorUniform, [0.8, 0.8, 0.8]);
+		gl.uniform3fv(shaderProgram.pointLightingDiffuseColorUniform, [0.8, 0.8, 0.8]);
+	}
+	gl.uniform1f(shaderProgram.materialShininessUniform, 32);
 	
 	gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, bgTexture);
+    gl.bindTexture(gl.TEXTURE_2D, grayWallTexture);
 	gl.uniform1i(shaderProgram.samplerUniform, 0);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
@@ -130,15 +130,20 @@ function drawScene() {
     mat4.translate(mvMatrix, [boardBody.position.x, boardBody.position.y, boardBody.position.z]);
 	mat4.scale(mvMatrix, [4, 3, 0.2]);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, grayWallTexture);
 	gl.uniform1i(shaderProgram.samplerUniform, 0);
 	
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-    setMatrixUniforms();
-    gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+	setMatrixUniforms();
+	gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+
     mvPopMatrix();
 
 }

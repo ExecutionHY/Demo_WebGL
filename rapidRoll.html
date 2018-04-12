@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>Learning WebGL &mdash; lesson 4</title>
+<title>RapidRoll ver0.1</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
 <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
@@ -9,50 +9,73 @@
 <script type="text/javascript" src="cannon.min.js"></script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
-precision mediump float;
+	precision mediump float;
 
-varying vec2 vTextureCoord;
-varying vec3 vLightWeighting;
+    varying vec2 vTextureCoord;
+    varying vec3 vTransformedNormal;
+    varying vec4 vPosition;
 
-uniform sampler2D uSampler;
+    uniform float uMaterialShininess;
 
-void main(void) {
-	vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
-	gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);
-}
+    uniform bool uShowSpecularHighlights;
+    uniform bool uUseLighting;
+
+    uniform vec3 uAmbientColor;
+
+    uniform vec3 uPointLightingLocation;
+    uniform vec3 uPointLightingSpecularColor;
+    uniform vec3 uPointLightingDiffuseColor;
+
+    uniform sampler2D uSampler;
+
+
+    void main(void) {
+        vec3 lightWeighting;
+        if (!uUseLighting) {
+            lightWeighting = vec3(1.0, 1.0, 1.0);
+        } else {
+            vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+            vec3 normal = normalize(vTransformedNormal);
+
+            float specularLightWeighting = 0.0;
+            if (uShowSpecularHighlights) {
+                vec3 eyeDirection = normalize(-vPosition.xyz);
+                vec3 reflectionDirection = reflect(-lightDirection, normal);
+
+                specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+            }
+
+            float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+            lightWeighting = uAmbientColor
+                + uPointLightingSpecularColor * specularLightWeighting
+                + uPointLightingDiffuseColor * diffuseLightWeighting;
+        }
+
+        vec4 fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+        gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+    }
 </script>
 
 <script id="shader-vs" type="x-shader/x-vertex">
-attribute vec3 aVertexPosition;
-attribute vec3 aVertexNormal;
-attribute vec2 aTextureCoord;
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+    attribute vec2 aTextureCoord;
 
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
-uniform mat3 uNMatrix;
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
 
-uniform vec3 uAmbientColor;
+    varying vec2 vTextureCoord;
+    varying vec3 vTransformedNormal;
+    varying vec4 vPosition;
 
-uniform vec3 uLightingDirection;
-uniform vec3 uDirectionalColor;
 
-uniform bool uLightOn;
-
-varying vec2 vTextureCoord;
-varying vec3 vLightWeighting;
-
-void main(void) {
-	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-	vTextureCoord = aTextureCoord;
-
-	if (!uLightOn) {
-	vLightWeighting = vec3(1.0, 1.0, 1.0);
-	} else {
-	vec3 transformedNormal = uNMatrix * aVertexNormal;
-	float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
-	vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
-	}
-}
+    void main(void) {
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * vPosition;
+        vTextureCoord = aTextureCoord;
+        vTransformedNormal = uNMatrix * aVertexNormal;
+    }
 </script>
 
 <script type="text/javascript" src="utils.js"></script>
