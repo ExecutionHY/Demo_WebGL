@@ -2,6 +2,10 @@
 
 A small game based on WebGL
 
+Physics engine: [Cannon](https://github.com/schteppe/cannon.js).
+
+API: [http://schteppe.github.io/cannon.js/docs/classes/Body.html](http://schteppe.github.io/cannon.js/docs/classes/Body.html)
+
 ### Basic
 
 - [x] following camera (move on z-axis)
