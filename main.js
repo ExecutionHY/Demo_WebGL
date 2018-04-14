@@ -95,23 +95,38 @@ function setMatrixUniforms() {
 }
 
 function drawScene() {
+
+    // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // Clear the canvas AND the depth buffer.
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // Turn on culling. By default backfacing triangles will be culled.
+    gl.enable(gl.CULL_FACE);
+    // Enable the depth buffer
+    gl.enable(gl.DEPTH_TEST);
+    // Tell it to use our program (pair of shaders)
     gl.useProgram(shaderProgram);
 
-    mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0, pMatrix);
+	// Compute the projection matrix
+	var fieldOfViewRadians = MyUtils.degToRad(45);
+    var aspect = gl.viewportWidth / gl.viewportHeight;
+    var zNear = 1;
+    var zFar = 2000;
+	var projectionMatrix = mat4.create();
+	mat4.perspective(projectionMatrix, fieldOfViewRadians, aspect, zNear, zFar);
+    //mat4.perspective(fieldOfView, aspect, zNear, zFar, pMatrix);
 
-    mat4.identity(mvMatrix);
-    mat4.rotate(mvMatrix, MyUtils.degToRad(-60), [1, 0, 0]);
+	var modelViewMatrix = mat4.create();
+    mat4.rotate(modelViewMatrix, modelViewMatrix, MyUtils.degToRad(-60), [1, 0, 0]);
     //mat4.rotate(mvMatrix, MyUtils.degToRad(-10), [0, 1, 0]);
     
-    mat4.translate(mvMatrix, [-(-0+boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
+    mat4.translate(modelViewMatrix, modelViewMatrix, [-(-0+boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
 
 	// teapot
-	mvPushMatrix();
-	mat4.translate(mvMatrix, [boxBody.position.x, boxBody.position.y, boxBody.position.z]);
-	mat4.scale(mvMatrix, [0.1, 0.1, 0.1]);
-	mat4.rotate(mvMatrix, MyUtils.degToRad(90), [1, 0, 0]);
+
+	mat4.translate(modelViewMatrix, modelViewMatrix, [boxBody.position.x, boxBody.position.y, boxBody.position.z]);
+	mat4.scale(modelViewMatrix, modelViewMatrix, [0.1, 0.1, 0.1]);
+	mat4.rotate(modelViewMatrix, modelViewMatrix, MyUtils.degToRad(90), [1, 0, 0]);
 	
 
 	var lighting = 1;
@@ -140,11 +155,20 @@ function drawScene() {
 	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
 	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, teapotVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, teapotVertexIndexBuffer);
-	setMatrixUniforms();
+	
+
+	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, projectionMatrix);
+	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, modelViewMatrix);
+	var normalMatrix = mat3.create();
+	mat3.fromMat4(normalMatrix, modelViewMatrix);
+	mat3.invert(normalMatrix, normalMatrix);
+	//mat4.toInverseMat3(mvMatrix, normalMatrix);
+	mat3.transpose(normalMatrix, normalMatrix);
+	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+
 	gl.drawElements(gl.TRIANGLES, teapotVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
-	mvPopMatrix();
-	
+/*	
 	// board
 	mvPushMatrix();
     mat4.translate(mvMatrix, [boardBody.position.x, boardBody.position.y, boardBody.position.z]);
@@ -165,7 +189,7 @@ function drawScene() {
 	gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
     mvPopMatrix();
-
+*/
 }
 
 
@@ -248,7 +272,10 @@ function drawScene_() {
 	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, modelViewMatrix);
 
 	var normalMatrix = mat3.create();
-	mat3.transpose(normalMatrix, modelViewMatrix);
+	mat3.fromMat4(normalMatrix, modelViewMatrix);
+	mat3.invert(normalMatrix, normalMatrix);
+	//mat4.toInverseMat3(mvMatrix, normalMatrix);
+	mat3.transpose(normalMatrix, normalMatrix);
 	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 	gl.drawElements(gl.TRIANGLES, teapotVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
