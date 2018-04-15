@@ -116,17 +116,25 @@ function drawScene() {
 	mat4.perspective(projectionMatrix, fieldOfViewRadians, aspect, zNear, zFar);
     //mat4.perspective(fieldOfView, aspect, zNear, zFar, pMatrix);
 
-	var modelViewMatrix = mat4.create();
-    mat4.rotate(modelViewMatrix, modelViewMatrix, MyUtils.degToRad(-60), [1, 0, 0]);
-    //mat4.rotate(mvMatrix, MyUtils.degToRad(-10), [0, 1, 0]);
-    
-    mat4.translate(modelViewMatrix, modelViewMatrix, [-(-0+boxBody.position.x), 40.0, -(20.0+boxBody.position.z)]);
+	var boxPos = [boxBody.position.x, boxBody.position.y, boxBody.position.z];
+
+    // Use matrix math to compute a position on a circle where the camera is
+    var cameraPosition = [boxBody.position.x, boxBody.position.y-20, boxBody.position.z+20];
+	var up = [0, 0, 1];
+	// Compute the view matrix using look at.
+	var viewMatrix = mat4.create();
+	mat4.lookAt(viewMatrix, cameraPosition, boxPos, up);
 
 	// teapot
 
-	mat4.translate(modelViewMatrix, modelViewMatrix, [boxBody.position.x, boxBody.position.y, boxBody.position.z]);
-	mat4.scale(modelViewMatrix, modelViewMatrix, [0.1, 0.1, 0.1]);
-	mat4.rotate(modelViewMatrix, modelViewMatrix, MyUtils.degToRad(90), [1, 0, 0]);
+	// Model View Matrix
+	var modelMatrix = mat4.create();
+	mat4.translate(modelMatrix, modelMatrix, boxPos);
+	mat4.scale(modelMatrix, modelMatrix, [0.1, 0.1, 0.1]);
+	mat4.rotate(modelMatrix, modelMatrix, MyUtils.degToRad(90), [1, 0, 0]);
+	var modelViewMatrix = mat4.create();
+	mat4.multiply(modelViewMatrix, viewMatrix, modelMatrix);
+
 	
 
 	var lighting = 1;
@@ -155,24 +163,25 @@ function drawScene() {
 	gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
 	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, teapotVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, teapotVertexIndexBuffer);
-	
 
 	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, projectionMatrix);
 	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, modelViewMatrix);
 	var normalMatrix = mat3.create();
 	mat3.fromMat4(normalMatrix, modelViewMatrix);
 	mat3.invert(normalMatrix, normalMatrix);
-	//mat4.toInverseMat3(mvMatrix, normalMatrix);
 	mat3.transpose(normalMatrix, normalMatrix);
 	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 
 	gl.drawElements(gl.TRIANGLES, teapotVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
-/*	
+
 	// board
-	mvPushMatrix();
-    mat4.translate(mvMatrix, [boardBody.position.x, boardBody.position.y, boardBody.position.z]);
-	mat4.scale(mvMatrix, [4, 3, 0.2]);
+	var boardPos = [boardBody.position.x, boardBody.position.y, boardBody.position.z];
+	var modelMatrix = mat4.create();
+    mat4.translate(modelMatrix, modelMatrix, boardPos);
+	mat4.scale(modelMatrix, modelMatrix, [4, 3, 0.2]);
+	var modelViewMatrix = mat4.create();
+	mat4.multiply(modelViewMatrix, viewMatrix, modelMatrix);
 
 	gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, grayWallTexture);
@@ -185,11 +194,17 @@ function drawScene() {
 	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexNormalBuffer);
 	gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, cubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-	setMatrixUniforms();
+
+	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, projectionMatrix);
+	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, modelViewMatrix);
+	var normalMatrix = mat3.create();
+	mat3.fromMat4(normalMatrix, modelViewMatrix);
+	mat3.invert(normalMatrix, normalMatrix);
+	mat3.transpose(normalMatrix, normalMatrix);
+
 	gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
-    mvPopMatrix();
-*/
+
 }
 
 
