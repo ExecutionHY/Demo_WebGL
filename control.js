@@ -72,10 +72,12 @@ var groundBody = new CANNON.Body({
 });
 //world.addBody(groundBody);
 
+var angle = 0.0;
 function animate() {
     var timeNow = new Date().getTime();
     if (lastTime != 0) {
         var elapsed = (timeNow - lastTime) / 1000.0;
+        angle += elapsed*30;
 
         if (move_left) {
             boxBody.position.x += -speedLimit * elapsed;
