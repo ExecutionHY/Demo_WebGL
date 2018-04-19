@@ -4,7 +4,14 @@ var gl;
 var MyUtils = {
     initGL: function(canvas) {
         try {
-            gl = canvas.getContext("experimental-webgl");
+            gl = canvas.getContext('webgl2');
+            isWebGL2 = true;
+            if (!gl) { // try to fallback to webgl 1
+                gl = canvas.getContext('webgl') ||
+                    canvas.getContext('experimental-webgl');
+                isWebGL2 = false;
+                alert("Could not initialise WebGL2.0, sorry :-(");
+            }
             gl.viewportWidth = canvas.width;
             gl.viewportHeight = canvas.height;
         } catch (e) {

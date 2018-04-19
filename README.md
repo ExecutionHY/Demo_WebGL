@@ -1,6 +1,6 @@
-# RapidRoll_WebGL
+# Demo_WebGL
 
-A small game based on WebGL
+CG demos based on WebGL
 
 Physics engine: [Cannon](https://github.com/schteppe/cannon.js).
 
@@ -9,9 +9,7 @@ API: [http://schteppe.github.io/cannon.js/docs/classes/Body.html](http://schtepp
 ### Basic
 
 - [x] following camera (move on z-axis)
-- [ ] Ball rolling on the boards
-- [ ] Different kind of boards
-- [ ] Score system
+- [ ] update to WebGL2
 
 ### Advanced
 
@@ -22,10 +20,14 @@ API: [http://schteppe.github.io/cannon.js/docs/classes/Body.html](http://schtepp
 
 Q1: If you can not load images as texture:
 
+A1: disable local file districtions
+
 ```
 step1. Safari -> Preferences -> Advanced -> Show Develop menu in menu bar
 step2. Develop -> Disable local file districtions
 ```
+
+A2: start local server to debug, e.g. LiveServer in VSCode.
 
 Q2: If you want to put GLSL codes into files:
 

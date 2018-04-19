@@ -26,7 +26,6 @@ function initPrograms() {
 }
 
 
-
 var ceramicsTexture;
 var grayWallTexture;
 var rustTexture;
@@ -60,8 +59,6 @@ var teapotVertexTextureCoordBuffer;
 var teapotVertexIndexBuffer;
 
 
-
-
 function loadTeapot() {
 	var request = new XMLHttpRequest();
 	request.open("GET", "teapot.json");
@@ -72,7 +69,7 @@ function loadTeapot() {
 	}
 	request.send();
 }
-  
+
 function drawScene() {
 
     // Tell WebGL how to convert from clip space to pixels
@@ -80,7 +77,7 @@ function drawScene() {
     // Clear the canvas AND the depth buffer.
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // Turn on culling. By default backfacing triangles will be culled.
-    //gl.enable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
     // Enable the depth buffer
     gl.enable(gl.DEPTH_TEST);
     // Tell it to use our program (pair of shaders)
@@ -155,8 +152,18 @@ function drawScene() {
 
 	gl.drawElements(gl.TRIANGLES, teapotVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
-
 	// board
+    gl.useProgram(shaderProgram);
+	gl.uniform1i(shaderProgram.showSpecularHighlightsUniform, specularHighlights);
+	gl.uniform1i(shaderProgram.useLightingUniform, lighting);
+	if (lighting) {
+		gl.uniform3fv(shaderProgram.ambientColorUniform, [0.2, 0.2, 0.2]);
+		gl.uniform3fv(shaderProgram.pointLightingLocationUniform, lightPos);
+		gl.uniform3fv(shaderProgram.pointLightingSpecularColorUniform, [0.8, 0.8, 0.8]);
+		gl.uniform3fv(shaderProgram.pointLightingDiffuseColorUniform, [0.8, 0.8, 0.8]);
+	}
+	gl.uniform1f(shaderProgram.materialShininessUniform, 32);
+
 	var boardPos = [boardBody.position.x, boardBody.position.y, boardBody.position.z];
 	mat4.identity(modelMatrix);
     mat4.translate(modelMatrix, modelMatrix, boardPos);
@@ -178,10 +185,11 @@ function drawScene() {
 
 	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, projectionMatrix);
 	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, modelViewMatrix);
-	var normalMatrix = mat3.create();
+	normalMatrix = mat3.create();
 	mat3.fromMat4(normalMatrix, modelViewMatrix);
 	mat3.invert(normalMatrix, normalMatrix);
 	mat3.transpose(normalMatrix, normalMatrix);
+	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 
 	gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 

@@ -9,74 +9,79 @@
 <script type="text/javascript" src="webgl-utils.js"></script>
 <script type="text/javascript" src="cannon.min.js"></script>
 
-<script id="shader-fs" type="x-shader/x-fragment">
-	precision mediump float;
+<script id="shader-fs" type="x-shader/x-fragment">#version 300 es
 
-    varying vec2 vTextureCoord;
-    varying vec3 vTransformedNormal;
-    varying vec4 vPosition_cameraSpace;
+precision mediump float;
 
-    uniform float uMaterialShininess;
+in vec2 vTextureCoord;
+in vec3 vTransformedNormal;
+in vec4 vPosition_cameraSpace;
 
-    uniform bool uShowSpecularHighlights;
-    uniform bool uUseLighting;
+uniform float uMaterialShininess;
 
-    uniform vec3 uAmbientColor;
+uniform bool uShowSpecularHighlights;
+uniform bool uUseLighting;
 
-    uniform vec3 uPointLightingLocation;
-    uniform vec3 uPointLightingSpecularColor;
-    uniform vec3 uPointLightingDiffuseColor;
+uniform vec3 uAmbientColor;
 
-    uniform sampler2D uSampler;
+uniform vec3 uPointLightingLocation;
+uniform vec3 uPointLightingSpecularColor;
+uniform vec3 uPointLightingDiffuseColor;
 
+uniform sampler2D uSampler;
 
-    void main(void) {
-        vec3 lightWeighting;
-        if (!uUseLighting) {
-            lightWeighting = vec3(1.0, 1.0, 1.0);
-        } else {
-            vec3 lightDirection = normalize(uPointLightingLocation - vPosition_cameraSpace.xyz);
-            vec3 normal = normalize(vTransformedNormal);
+out vec4 outputColor;
 
-            float specularLightWeighting = 0.0;
-            if (uShowSpecularHighlights) {
-                vec3 eyeDirection = normalize(-vPosition_cameraSpace.xyz);
-                vec3 reflectionDirection = reflect(-lightDirection, normal);
+void main(void) {
+    vec3 lightWeighting;
+    if (!uUseLighting) {
+        lightWeighting = vec3(1.0, 1.0, 1.0);
+    } else {
+        vec3 lightDirection = normalize(uPointLightingLocation - vPosition_cameraSpace.xyz);
+        vec3 normal = normalize(vTransformedNormal);
 
-                specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
-            }
+        float specularLightWeighting = 0.0;
+        if (uShowSpecularHighlights) {
+            vec3 eyeDirection = normalize(-vPosition_cameraSpace.xyz);
+            vec3 reflectionDirection = reflect(-lightDirection, normal);
 
-            float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
-            lightWeighting = uAmbientColor
-                + uPointLightingSpecularColor * specularLightWeighting
-                + uPointLightingDiffuseColor * diffuseLightWeighting;
+            specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
         }
 
-        vec4 fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
-        gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+        float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+        lightWeighting = uAmbientColor
+            + uPointLightingSpecularColor * specularLightWeighting
+            + uPointLightingDiffuseColor * diffuseLightWeighting;
     }
+
+    vec4 fragmentColor = texture(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+    outputColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+}
+
 </script>
 
-<script id="shader-vs" type="x-shader/x-vertex">
-    attribute vec3 aVertexPosition;
-    attribute vec3 aVertexNormal;
-    attribute vec2 aTextureCoord;
+<script id="shader-vs" type="x-shader/x-vertex">#version 300 es
 
-    uniform mat4 uMVMatrix;
-    uniform mat4 uPMatrix;
-    uniform mat3 uNMatrix;
+in vec3 aVertexPosition;
+in vec3 aVertexNormal;
+in vec2 aTextureCoord;
 
-    varying vec2 vTextureCoord;
-    varying vec3 vTransformedNormal;
-    varying vec4 vPosition_cameraSpace;
+uniform mat4 uMVMatrix;
+uniform mat4 uPMatrix;
+uniform mat3 uNMatrix;
+
+out vec2 vTextureCoord;
+out vec3 vTransformedNormal;
+out vec4 vPosition_cameraSpace;
 
 
-    void main(void) {
-        vPosition_cameraSpace = uMVMatrix * vec4(aVertexPosition, 1.0);
-        gl_Position = uPMatrix * vPosition_cameraSpace;
-        vTextureCoord = aTextureCoord;
-        vTransformedNormal = uNMatrix * aVertexNormal;
-    }
+void main(void) {
+    vPosition_cameraSpace = uMVMatrix * vec4(aVertexPosition, 1.0);
+    gl_Position = uPMatrix * vPosition_cameraSpace;
+    vTextureCoord = aTextureCoord;
+    vTransformedNormal = uNMatrix * aVertexNormal;
+}
+
 </script>
 
 <script type="text/javascript" src="myUtils.js"></script>
