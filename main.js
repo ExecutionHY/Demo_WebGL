@@ -24,7 +24,7 @@ function initPrograms() {
 	shaderProgram.pointLightingSpecularColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingSpecularColor");
 	shaderProgram.pointLightingDiffuseColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingDiffuseColor");
 }
-
+ 
 
 var ceramicsTexture;
 var grayWallTexture;

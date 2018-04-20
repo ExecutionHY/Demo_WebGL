@@ -73,10 +73,20 @@ var groundBody = new CANNON.Body({
 //world.addBody(groundBody);
 
 var angle = 0.0;
+var frameTime = 0;
+var frameCnt = 0;
 function animate() {
     var timeNow = new Date().getTime();
     if (lastTime != 0) {
         var elapsed = (timeNow - lastTime) / 1000.0;
+        frameTime += elapsed;
+        frameCnt += 1;
+        if (frameTime >= 1) {
+            document.getElementById("FPScounter").textContent = "FPS: " + frameCnt.toString();
+            frameTime = 0;
+            frameCnt = 0;
+        }
+
         angle += elapsed*30;
 
         if (move_left) {
